@@ -8,7 +8,7 @@ from google import genai
 from google.genai.errors import APIError # API каталарын кармоо үчүн
 
 # --- КОНФИГУРАЦИЯ ---
-# ЭСКЕРТҮҮ: Ачкычтарды Render'дин Environment Variables аркылуу алабыз (Render үчүн туура жол!)
+# ЭСКЕРТҮҮ: Ачкычтарды Environment Variables аркылуу алабыз (Render үчүн туура жол!)
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN") 
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY") 
 
@@ -36,7 +36,7 @@ if GEMINI_API_KEY:
     except Exception as e:
         logger.error(f"Gemini API клиентин ишке киргизүүдө ката: {e}")
 
-# ⭐ ЖАНЫЛАНГАН SYSTEM PROMPT (Коддун негизги өзгөрүүсү) ⭐
+# ЖАНЫЛАНГАН SYSTEM PROMPT (Мурдагыдай эле)
 SYSTEM_PROMPT = """Сиз достук маанайдагы, сылык жана маалыматтуу жардамчысыз. 
 Сиздин жоопторуңуз **өтө кыска болбошу керек**, тескерисинче, **орточо узундуктагы, кеңири жана толук** болушу керек.
 Сиздин милдеттериңиз:
@@ -57,6 +57,14 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     if not user_prompt:
         return
 
+    # ⭐ ЖАҢЫ ЛОГИКА: Чекитти текшерүү ⭐
+    # Эгер билдирүү чекит менен башталбаса, эч кандай жооп бербей, функцияны токтотот.
+    if not user_prompt.startswith('.'):
+        logger.info("Билдирүү чекит менен башталган жок. Эске алынган жок (Ignored).")
+        return
+
+    # Чекит менен башталса, андан ары иштетет.
+
     # ⭐ КОЛДОНУУЧУНУН АТЫН АЛУУ ⭐
     chat_member = update.message.from_user
     user_name = chat_member.first_name 
@@ -66,15 +74,10 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     logger.info(f"Суроо келди: {user_prompt} (Колдонуучу: {user_name})")
     await update.message.chat.send_action("typing")
 
-    # 1. Чекитти текшерүү
-    if not user_prompt.startswith('.'):
-        await update.message.reply_text("**Эскертүү:** Суроону чекит '.' белгиси менен баштаңыз. Мисалы: `.Кандайсың?`")
-        return
-
-    # 2. Чекитти алып салуу
+    # Чекитти алып салуу
     user_prompt_clean = user_prompt[1:].strip()
     
-    # ⭐ КОЛДОНУУЧУНУН АТЫН PROMPT'КА КОШУУ (Аты-жөнүн эске алуу үчүн) ⭐
+    # ⭐ КОЛДОНУУЧУНУН АТЫН PROMPT'КА КОШУУ ⭐
     full_prompt = f"Колдонуучунун аты: {user_name}. Анын суроосу: {user_prompt_clean}"
     
     config = {
@@ -123,7 +126,6 @@ def main() -> None:
     
     # Environment Variables текшерүү
     if not TELEGRAM_BOT_TOKEN or not GEMINI_API_KEY:
-        # Эгер ачкычтар жок болсо, ката жөнүндө билдирүү берет
         logger.error("❌ TELEGRAM_BOT_TOKEN же GEMINI_API_KEY Environment Variables аркылуу коюлган эмес.")
         return
 
