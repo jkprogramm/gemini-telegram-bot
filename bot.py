@@ -76,13 +76,13 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
     # Чекитти алып салуу
     user_prompt_clean = user_prompt[1:].strip()
-    
+     config = {
+        "system_instruction": SYSTEM_PROMPT 
+    }
     # ⭐ КОЛДОНУУЧУНУН АТЫН PROMPT'КА КОШУУ ⭐
     full_prompt = f"Колдонуучунун аты: {user_name}. Анын суроосу: {user_prompt_clean}"
     
-    config = {
-        "system_instruction": SYSTEM_PROMPT 
-    }
+   
     
     # 3. Кайра аракет кылуу циклы
     for attempt in range(MAX_RETRIES):
@@ -90,8 +90,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             # Gemini API'ге суроо жөнөтүү
             response = genai_client.models.generate_content(
                 model=GEMINI_MODEL,
-                contents=full_prompt, # Жаңыланган prompt'ту колдонобуз
-                config=config 
+                contents=full_prompt+config, # Жаңыланган prompt'ту колдонобуз
+                
             )
             
             # Эгер ийгиликтүү болсо, жоопту кайтарып, функцияны токтотуу
@@ -141,5 +141,6 @@ def main() -> None:
 
 if __name__ == '__main__':
     main()
+
 
 
