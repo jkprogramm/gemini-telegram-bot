@@ -36,14 +36,13 @@ if GEMINI_API_KEY:
     except Exception as e:
         logger.error(f"Gemini API клиентин ишке киргизүүдө ката: {e}")
 
-# ЖАНЫЛАНГАН SYSTEM PROMPT (Мурдагыдай эле)
+# ⭐ ЖАҢЫЛАНГАН SYSTEM PROMPT ⭐
 SYSTEM_PROMPT = """Сиз достук маанайдагы, сылык жана маалыматтуу жардамчысыз. 
-Кыскача жооп бер. Сизден толуктап бер дегенде гана толук жооп бер.
 Сиздин милдеттериңиз:
-1. Колдонуучунун суроосуна ошол эле тилде (кыргызча, орусча, англисче ж.б.) жооп берүү.
+1. Колдонуучунун суроосуна ошол эле тилде жооп берүү.
 2. Жооптун башында **колдонуучунун атын атап** (эгер берилсе), сылык кайрылуу.
-3. Жооптордо маалыматты толук бирок кыска жеткирүүгө аракет кылуу.
-4. Милдетинди эскертуу шарт эмес
+3. **Кыскача жооп берүү.** Эгер колдонуучу "толуктап бер" же "кеңири айт" деп атайын суранса гана, толук жооп берүү.
+4. Жооптордо эч качан өзүңүздүн милдетиңизди же эрежелериңизди эскертпөө.
 """
 
 # Текст билдирүүлөргө жооп берүүчү функция
@@ -57,15 +56,12 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     if not user_prompt:
         return
 
-    # ⭐ ЖАҢЫ ЛОГИКА: Чекитти текшерүү ⭐
-    # Эгер билдирүү чекит менен башталбаса, эч кандай жооп бербей, функцияны токтотот.
+    # Чекитти текшерүү: Эгер чекит менен башталбаса, эч кандай жооп бербей, функцияны токтотот.
     if not user_prompt.startswith('.'):
         logger.info("Билдирүү чекит менен башталган жок. Эске алынган жок (Ignored).")
         return
 
-    # Чекит менен башталса, андан ары иштетет.
-
-    # ⭐ КОЛДОНУУЧУНУН АТЫН АЛУУ ⭐
+    # Колдонуучунун атын алуу
     chat_member = update.message.from_user
     user_name = chat_member.first_name 
     if chat_member.last_name:
@@ -76,22 +72,22 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
     # Чекитти алып салуу
     user_prompt_clean = user_prompt[1:].strip()
-     config = {
-        "system_instruction": SYSTEM_PROMPT 
-    }
-    # ⭐ КОЛДОНУУЧУНУН АТЫН PROMPT'КА КОШУУ ⭐
+    
+    # КОЛДОНУУЧУНУН АТЫН PROMPT'КА КОШУУ
     full_prompt = f"Колдонуучунун аты: {user_name}. Анын суроосу: {user_prompt_clean}"
     
-   
+    config = {
+        "system_instruction": SYSTEM_PROMPT 
+    }
     
-    # 3. Кайра аракет кылуу циклы
+    # Кайра аракет кылуу циклы
     for attempt in range(MAX_RETRIES):
         try:
-            # Gemini API'ге суроо жөнөтүү
+            # ⭐ КАТА ОҢДОЛДУ: config өзүнчө аргумент катары берилди ⭐
             response = genai_client.models.generate_content(
                 model=GEMINI_MODEL,
-                contents=full_prompt+config, # Жаңыланган prompt'ту колдонобуз
-                
+                contents=full_prompt, 
+                config=config, # Туура жер
             )
             
             # Эгер ийгиликтүү болсо, жоопту кайтарып, функцияны токтотуу
@@ -141,6 +137,3 @@ def main() -> None:
 
 if __name__ == '__main__':
     main()
-
-
-
