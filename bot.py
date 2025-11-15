@@ -76,6 +76,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     # КОЛДОНУУЧУНУН АТЫН PROMPT'КА КОШУУ
     full_prompt = f"Колдонуучунун аты: {user_name}. Анын суроосу: {user_prompt_clean}"
     
+    # КАТА ОҢДОЛДУ: Бул саптын алдында ашыкча боштуктар болбошу керек
     config = {
         "system_instruction": SYSTEM_PROMPT 
     }
@@ -83,7 +84,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     # Кайра аракет кылуу циклы
     for attempt in range(MAX_RETRIES):
         try:
-            # ⭐ КАТА ОҢДОЛДУ: config өзүнчө аргумент катары берилди ⭐
+            # config өзүнчө аргумент катары берилди
             response = genai_client.models.generate_content(
                 model=GEMINI_MODEL,
                 contents=full_prompt, 
